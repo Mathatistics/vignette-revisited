@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.2.335">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Terry Therneau">
+<meta name="author" content="Cynthia Crowson">
+<meta name="author" content="Elizabeth Atkinson">
+
+<title>Multi-state models and competing risks</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1.6em;
+  vertical-align: middle;
+}
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { color: #008000; } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { color: #008000; font-weight: bold; } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+</style>
+
+
+<script src="compete_files/libs/clipboard/clipboard.min.js"></script>
+<script src="compete_files/libs/quarto-html/quarto.js"></script>
+<script src="compete_files/libs/quarto-html/popper.min.js"></script>
+<script src="compete_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="compete_files/libs/quarto-html/anchor.min.js"></script>
+<link href="compete_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="compete_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="compete_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="compete_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="compete_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+</head>
+
+<body class="fullcontent">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Multi-state models and competing risks</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Authors</div>
+    <div class="quarto-title-meta-contents">
+             <p>Terry Therneau </p>
+             <p>Cynthia Crowson </p>
+             <p>Elizabeth Atkinson </p>
+          </div>
+  </div>
+    
+  
+    
+  </div>
+  
+
+</header>
+
+<div class="cell">
+
+</div>
+<section id="multi-state-models" class="level2">
+<h2 class="anchored" data-anchor-id="multi-state-models">Multi-state models</h2>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-mfig1" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="compete_files/figure-html/fig-mfig1-1.png" class="img-fluid figure-img" style="width:100.0%"></p>
+<p></p><figcaption class="figure-caption">Figure&nbsp;1: Four multi-state models. The upper left panel depicts simple survival, the upper right depicts sequential events, the lower left is an example of competing risks, and the lower right panel is a multi-state illness-death model.</figcaption><p></p>
+</figure>
+</div>
+</div>
+</div>
+<p>A multi-state model is used to model a process where subjects transition from one state to the next. For instance, a standard survival curve can be thought of as a simple multi-state model with two states (alive and dead) and one transition between those two states. A diagram illustrating this process is shown in the top left corner of <a href="#fig-mfig1">Figure&nbsp;1</a>. In these types of diagrams, each box is a state and each arrow is a possible transition. The lower left diagram depicts a classic competing risk analysis, where all subjects start on the left and each subject can make a single transition to one of 3 terminal states. The bottom right diagram shows a common multi-state situation known as the illness-death model with recovery. Finally, the upper right diagram represents sequential events, such as repeated infections in the CGD study. In that case one subject had 8 events so there are 9 states corresponding to entry into the study (0 infections) and the first, second, , eighth events.</p>
+<p>As will be shown below, there are often multiple choices for the state and transition diagram, and for some data sets it is revealing to look at a problem from multiple views. In addition to deciding the diagram that best matches the research questions, the two other primary decisions are the choice of time scale for the fits, e.g., time from entry in the study vs.&nbsp;time from entry in the state, and what covariates will be used.</p>
+</section>
+<section id="multi-state-curves" class="level2">
+<h2 class="anchored" data-anchor-id="multi-state-curves">Multi-state curves</h2>
+<section id="aalen-johansen-estimate" class="level3">
+<h3 class="anchored" data-anchor-id="aalen-johansen-estimate">Aalen-Johansen estimate</h3>
+<p>As a starting point for the analysis, it is important to compute and plot estimates of <span class="math inline">\(p(t)\)</span>, which is a vector containing the probability of being in each of the states at time <span class="math inline">\(t\)</span>. If there is no censoring then <span class="math inline">\(p\)</span> becomes a simple tabulation at time <span class="math inline">\(t\)</span> of all the states. For the general case, we compute this using the Aalen-Johansen estimate via the <code>survfit</code> function.</p>
+<p>Mathematically the estimate is simple. For each unique time where an event occurs, form the transition matrix <span class="math inline">\(T(t)\)</span> with elements or rates of <span class="math inline">\(\lambda_{ij}(t) =\)</span> the fraction of subjects who transition from state <span class="math inline">\(i\)</span> to <span class="math inline">\(j\)</span> at time <span class="math inline">\(t\)</span>, among those in state <span class="math inline">\(i\)</span> just prior to time <span class="math inline">\(t\)</span>. (<span class="math inline">\(T\)</span> is equal to the identity matrix at any time point without an observed transition.) Then</p>
+<p><span id="eq-AJ"><span class="math display">\[
+p(t) = p(0) \prod_{s \le t} T(s)
+\tag{1}\]</span></span></p>
+<p>where <span class="math inline">\(p(0)\)</span> is the initial distribution of subjects.</p>
+<p>Let’s work this out for the simple two-state alive <span class="math inline">\(\rightarrow\)</span> {death} model. Let <span class="math inline">\(n(t)\)</span> be the number of subjects still at risk at time <span class="math inline">\(t\)</span> and <span class="math inline">\(d(t)\)</span> the number of deaths at that time point. All subjects start in the alive state and thus <span class="math inline">\(p(0) = (1,0)\)</span> and the transition matrix is</p>
+<p><span class="math display">\[
+T(s) = \left(
+  \begin{array}{cc}
+    \frac{n(s)- d(s)}{n(s)}  &amp; \frac{d(s)}{n(s)} \\\\ 0 &amp; 1
+  \end{array}
+\right)
+\]</span></p>
+<p>The two rows are “start in state 1 (alive)” and “start in state 2” and the two colums are “finish in state 1”, “finish in state 2 (death)”. The second row corresponds to the fact that death is an absorbing state: the probability of a death <span class="math inline">\(\rightarrow\)</span> alive transition (lower left element) is 0.</p>
+<p>Writing out the matrices for the first few transitions and multiplying them leads to</p>
+<p><span id="eq-km"><span class="math display">\[
+p_1(t) = \prod_{s \le t} \left[n(s) - d(s)\right] /n(s)
+\tag{2}\]</span></span></p>
+<p>which we recognize as the Kaplan-Meier estimate of survival. For the two state alive-dead model the Aalen-Johansen (AJ) estimate has reprised the KM. In the competing risks case <span class="math inline">\(p(t)\)</span> has an alternate form known as the <em>cumulative incidence</em> (CI) function</p>
+<p><span id="eq-cuminc"><span class="math display">\[
+CI_k(t) = \int_0^t \lambda_k(u) S(u) du
+\tag{3}\]</span></span></p>
+<p>where <span class="math inline">\(\lambda_k\)</span> is the incidence function for outcome <span class="math inline">\(k\)</span>, and <span class="math inline">\(S\)</span> is the overall survival curve for “time to any endpoint”. Repeating the same matrix exercise for the competing risks, i.e.&nbsp;writing out the Aalen-Johansen computation, exactly recovers the CI formula. The CI is also a special case of the Aalen-Johansen. (The label “cumulative incidence” is one of the more unfortunate ones in the survival lexicon, since we normally use ‘incidence’ and ‘hazard’ as interchangeable synonyms but the CI is <em>not</em> a cumulative hazard.) The AJ estimate is very flexible; subjects can visit multiple states during the course of a study, subjects can start after time 0 (delayed entry), and they can start in any of the states. The <code>survfit</code> function implements the AJ estimate and will handle all these cases.</p>
+<p>The standard error of the estimates is computed using an infinitesimal jackknife. Let <span class="math inline">\(D(t)\)</span> be a matrix with one row per subject and one column per state. Each row contains the <em>change</em> in <span class="math inline">\(p(t)\)</span> corresponding to subject <span class="math inline">\(i\)</span>, i.e., the derivative of <span class="math inline">\(p\)</span> with respect to the <span class="math inline">\(i\)</span>th subject’s case weight <span class="math inline">\(dp(t)/dw_i\)</span>. Then <span class="math inline">\(V(t) = D'WD\)</span> is the estimated variance-covariance matrix of the estimates at time <span class="math inline">\(t\)</span>, where <span class="math inline">\(W\)</span> is a diagonal matrix of observation weights.</p>
+<p>If a single subject is represented by multiple rows in the data set, then <span class="math inline">\(D\)</span> is first collapsed to have one row per subject, the new row for subject <span class="math inline">\(i\)</span> is the sum of the rows for the observations that represented the subject. This is essentially the same algorithm as the robust variance for a Cox model. For simple two state alive -&gt; dead model without case weights, the IJ estimate of variance is identical to the traditional Greenwood estimate for the variance of the survival curve <span class="math inline">\(S\)</span>. (This was a surprise when we first observed it; proving the equivalence is not straightforward.)</p>
+<p>The <span class="math inline">\(p(t)\)</span> vector obeys the obvious constraint that its sum at any time is equal to one; i.e., each person has to be somewhere. We will use the phrase <em>probability in state</em> or simply <span class="math inline">\(p\)</span> when referring to the vector.</p>
+<p>In the simple two state model Pr(alive) is the usual KM survival estimate, and we have <span class="math inline">\(p_1(t) = 1- p_2(t)\)</span>, Pr(alive) = 1 - Pr(dead). Plots for the 2 state case sometimes choose to show Pr(alive) and sometimes Pr(dead). Which one is used often depends on a historical whim of the disease specialty; cardiology journals for instance quite often use Pr(event) resulting in curves that rise starting from zero, while oncology journals invariably use Pr(alive) giving curves that fall downhill from 1. The <code>survfit</code> routine’s historical default for the 2 state case is to print and plot Pr(alive)= <span class="math inline">\(p_1(t)\)</span>, which reflects that the author of the routine was working primarily in cancer trials at the time said default was chosen.</p>
+<p>For simple survival we have gotten used to the idea of using Pr(dead) and Pr(alive) interchangeably, but that habit needs to be left behind for multi-state models, as curves of <span class="math inline">\(1-p_k(t)\)</span> = probability(any other state than <span class="math inline">\(k\)</span>) are not useful. In the multi-state case, some curves will rise and then fall. For competing risks the curve for the initial state (leftmost in the diagram) is rarely included in the final plot. Since the curves sum to 1, the full set is redundant. Pr(nothing yet) is usually the least interesting of the set and so it is left off to make the plot less busy. The remaining curves in the competing risks case rise from 0. (This bothers some researchers as it ‘just looks wrong’ to them.)</p>
+</section>
+<section id="examples" class="level3">
+<h3 class="anchored" data-anchor-id="examples">Examples</h3>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-mfig2" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="compete_files/figure-html/fig-mfig2-1.png" class="img-fluid figure-img" style="width:100.0%"></p>
+<p></p><figcaption class="figure-caption">Figure&nbsp;2: Three models for the MGUS data.</figcaption><p></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Start with a simple competing risks problem as illustrated in the first diagram of <a href="#fig-mfig2">Figure&nbsp;2</a>. The <code>mgus2</code> data set contains the time to plasma cell malignancy (PCM) and/or death for 1384 subjects diagnosed with monoclonal gammopathy of undetermined significance (MGUS). Survival and progression time are in months. The code below creates an ordinary Kaplan-Meier curve of post-diagnosis survival for these subjects, along with a histogram of age at diagnosis. The mean age at diagnosis is just over 70 years.</p>
+<div class="cell" data-fig="true">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>oldpar <span class="ot">&lt;-</span> <span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>))</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">hist</span>(mgus2<span class="sc">$</span>age, <span class="at">nclass =</span> <span class="dv">30</span>, <span class="at">main =</span> <span class="st">""</span>, <span class="at">xlab =</span> <span class="st">"Age"</span>)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">with</span>(mgus2, <span class="fu">tapply</span>(age, sex, mean))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>       F        M 
+71.32171 69.67065 </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>mfit1 <span class="ot">&lt;-</span> <span class="fu">survfit</span>(<span class="fu">Surv</span>(futime, death) <span class="sc">~</span> sex, <span class="at">data =</span> mgus2)</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>mfit1</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Call: survfit(formula = Surv(futime, death) ~ sex, data = mgus2)
+
+        n events median 0.95LCL 0.95UCL
+sex=F 631    423    108     100     121
+sex=M 753    540     88      79      97</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(mfit1,</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">col =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>), <span class="at">xscale =</span> <span class="dv">12</span>, <span class="at">mark.time =</span> <span class="cn">FALSE</span>, <span class="at">lwd =</span> <span class="dv">2</span>,</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">xlab =</span> <span class="st">"Years post diagnosis"</span>, <span class="at">ylab =</span> <span class="st">"Survival"</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="fu">legend</span>(<span class="st">"topright"</span>, <span class="fu">c</span>(<span class="st">"female"</span>, <span class="st">"male"</span>), <span class="at">col =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>, <span class="at">lwd =</span> <span class="dv">2</span>, <span class="at">bty =</span> <span class="st">"n"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="compete_files/figure-html/mgus1-1.png" class="img-fluid" style="width:100.0%"></p>
+</div>
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(oldpar)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>The xscale and yscale arguments to <code>plot.survfit</code> affect only the axis labels, not the data. Further additions to the plot region such as <code>legend</code>, <code>lines</code>, or <code>text</code> remain in the original scale. This simplifies programmatic additions such as adding another curve to the plot, while making interactive additions such as a legend somewhat less simple.</p>
+<p>As a second model for these subjects we will use competing risks (CR), where PCM and death without malignancy are the two terminal states, as shown in the upper left of <a href="#fig-mfig2">Figure&nbsp;2</a>. In a CR model we are only interested in the first event for each subject. Formally we are treating progression to a PCM as an <em>absorbing state</em>, i.e., one that subjects never exit. We create a variable <code>etime</code> containing the time to the first of progression, death, or last follow-up along with an event variable that contains the outcome. The starting data set <code>mgus2</code> has two pairs of variables <code>(ptime, pstat)</code> that contain the time to progression and <code>(futime, status)</code> that contain the time to death or last known alive. The code below creates the necessary <code>etime</code> and <code>event</code> variables, then computes and plots the competing risks estimate.</p>
+<div class="cell" data-fig="true">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>mgus2<span class="sc">$</span>etime <span class="ot">&lt;-</span> <span class="fu">with</span>(mgus2, <span class="fu">ifelse</span>(pstat <span class="sc">==</span> <span class="dv">0</span>, futime, ptime))</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>event <span class="ot">&lt;-</span> <span class="fu">with</span>(mgus2, <span class="fu">ifelse</span>(pstat <span class="sc">==</span> <span class="dv">0</span>, <span class="dv">2</span> <span class="sc">*</span> death, <span class="dv">1</span>))</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>mgus2<span class="sc">$</span>event <span class="ot">&lt;-</span> <span class="fu">factor</span>(event, <span class="dv">0</span><span class="sc">:</span><span class="dv">2</span>, <span class="at">labels =</span> <span class="fu">c</span>(<span class="st">"censor"</span>, <span class="st">"pcm"</span>, <span class="st">"death"</span>))</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(mgus2<span class="sc">$</span>event)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+censor    pcm  death 
+   409    115    860 </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>mfit2 <span class="ot">&lt;-</span> <span class="fu">survfit</span>(<span class="fu">Surv</span>(etime, event) <span class="sc">~</span> sex, <span class="at">data =</span> mgus2)</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(mfit2, <span class="at">rmean =</span> <span class="dv">240</span>, <span class="at">scale =</span> <span class="dv">12</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Call: survfit(formula = Surv(etime, event) ~ sex, data = mgus2)
+
+               n nevent    rmean*
+sex=F, (s0)  631      0  9.853608
+sex=M, (s0)  753      0  8.675012
+sex=F, pcm   631     59  1.323284
+sex=M, pcm   753     56  1.064693
+sex=F, death 631    370  8.823108
+sex=M, death 753    490 10.260294
+   *restricted mean time in state (max time = 20 )</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>mfit2<span class="sc">$</span>transitions</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>       to
+from    pcm death (censored)
+  (s0)  115   860        409
+  pcm     0     0          0
+  death   0     0          0</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(mfit2,</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">col =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">1</span>, <span class="dv">2</span>), <span class="at">lty =</span> <span class="fu">c</span>(<span class="dv">2</span>, <span class="dv">2</span>, <span class="dv">1</span>, <span class="dv">1</span>),</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">mark.time =</span> <span class="cn">FALSE</span>, <span class="at">lwd =</span> <span class="dv">2</span>, <span class="at">xscale =</span> <span class="dv">12</span>,</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">xlab =</span> <span class="st">"Years post diagnosis"</span>, <span class="at">ylab =</span> <span class="st">"Probability in State"</span></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a><span class="fu">legend</span>(<span class="dv">240</span>, .<span class="dv">6</span>, <span class="fu">c</span>(<span class="st">"death:female"</span>, <span class="st">"death:male"</span>, <span class="st">"pcm:female"</span>, <span class="st">"pcm:male"</span>),</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">col =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">1</span>, <span class="dv">2</span>), <span class="at">lty =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">2</span>), <span class="at">lwd =</span> <span class="dv">2</span>, <span class="at">bty =</span> <span class="st">"n"</span></span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="compete_files/figure-html/mgus2-1.png" class="img-fluid" style="width:100.0%"></p>
+</div>
+</div>
+<p>The <code>mfit2</code> call is nearly identical to that for an ordinary Kaplan-Meier, with the exception of the <code>event</code> variable.</p>
+<ol class="example" type="1">
+<li><p>The event variable was created as a <em>factor</em>, whereas for ordinary single state survival the status is either 0/1 or TRUE/FALSE. The first level of the factor must be censoring, which is the status code for those whose follow-up terminated without reaching a new endpoint. Codes for the remaining states can be in any order. The labels for the states are unrestricted, e.g., the first one does not have to be “censor”. (It will be treated as ‘no event at this time’, whatever the label.)</p></li>
+<li><p>A simple print of the <code>mfit2</code> object shows the order in which the curves will be displayed. This information was used to choose the line types and colors for the curves.</p></li>
+<li><p>The <code>mfit2</code> object contains curves for all the states, but by default the entry state will not be plotted. The remaining curves all start at 0.</p></li>
+<li><p>The transitions component of the result is useful as a data check, e.g., if it showed a transition from death to PCM.</p></li>
+<li><p>Each subject’s initial state can be specified by the <code>istate</code> argument. When this is omitted all subjects are assumed to start from an entry state named ‘(s0)’. This default name is an amalgam of “state 0”, a label sometimes used in textbooks for the leftmost box, and an R convention of using () for constructed names, e.g., ‘(Intercept)’ from an lm() call.</p></li>
+</ol>
+<p>The printout shows that a male subject will spend, on average, 8.7 of his first 20 years post diagnosis in the entry state, 1.1 years in the PCM state and 10.3 of those 20 in the death state. If a cutoff time is not given the default is to use the maximum observed time for all curves, which is 424 months in this case.</p>
+<p>The result of a multi-state <code>survfit</code> is a matrix of probabilities with one row per time and one column per state. These are contained in the probability-in-state (<code>pstate</code>) component of the resulting survfit object. Since the three MGUS states of entry/pcm/death must sum to 1 at any given time (everyone has to be somewhere), one of the three curves is redundant and the “fraction still in the entry state” curve is normally the least interesting. By default, any state with the label ‘(s0)’ is left off of the plot; which is the default value of the <code>noplot</code> option of <code>plot.survfit</code>. One can easily plot all of the states by setting the option to NULL.</p>
+<p>A common mistake with competing risks is to use the Kaplan-Meier separately on each event type while treating other event types as censored. The next plot is an example of this for the PCM endpoint.</p>
+<div class="cell" data-fig="true">
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>pcmbad <span class="ot">&lt;-</span> <span class="fu">survfit</span>(<span class="fu">Surv</span>(etime, pstat) <span class="sc">~</span> sex, <span class="at">data =</span> mgus2)</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(pcmbad[<span class="dv">2</span>],</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">lwd =</span> <span class="dv">2</span>, <span class="at">fun =</span> <span class="st">"event"</span>, <span class="at">conf.int =</span> <span class="cn">FALSE</span>, <span class="at">xscale =</span> <span class="dv">12</span>,</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">xlab =</span> <span class="st">"Years post diagnosis"</span>, <span class="at">ylab =</span> <span class="st">"Fraction with PCM"</span></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a><span class="fu">lines</span>(mfit2[<span class="dv">2</span>, <span class="st">"pcm"</span>], <span class="at">lty =</span> <span class="dv">2</span>, <span class="at">lwd =</span> <span class="dv">2</span>, <span class="at">mark.time =</span> <span class="cn">FALSE</span>, <span class="at">conf.int =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a><span class="fu">legend</span>(<span class="dv">0</span>, .<span class="dv">25</span>, <span class="fu">c</span>(<span class="st">"Males, PCM, incorrect curve"</span>, <span class="st">"Males, PCM, competing risk"</span>),</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">col =</span> <span class="dv">1</span>, <span class="at">lwd =</span> <span class="dv">2</span>, <span class="at">lty =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>), <span class="at">bty =</span> <span class="st">"n"</span></span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="compete_files/figure-html/mgus3-1.png" class="img-fluid" style="width:100.0%"></p>
+</div>
+</div>
+<p>There are two problems with the <code>pcmbad</code> fit. The first is that it attempts to estimate the expected occurrence of plasma cell malignancy (PCM) if all other causes of death were to be disallowed. In this hypothetical world it is indeed true that many more subjects would progress to PCM (the incorrect curve is higher), but it is also not a world that any of us will ever inhabit. This author views the result in much the same light as discussions of survival after the zombie apocalypse. The second problem is that the computation for this hypothetical case is only correct if all of the competing endpoints are independent, a situation which is almost never true. We thus have an unreliable estimate of an uninteresting quantity. The competing risks curve, on the other hand, estimates the fraction of MGUS subjects who <em>will experience</em> PCM, a quantity sometimes known as the lifetime risk, and one which is actually observable.</p>
+<p>The last example chose to plot only a subset of the curves, something that is often desirable in competing risks problems to avoid a “tangle of yarn” plot that simply has too many elements. This is done by subscripting the <code>survfit</code> object. For subscripting, multi-state curves behave as a matrix with the outcomes as the second subscript. The columns are in order of the levels of <code>event</code>, i.e., as displayed by our earlier call to <code>table(event)</code>. The first subscript indexes the groups formed by the right hand side of the model formula, and will be in the same order as simple survival curves. Thus <code>mfit2[2,1]</code> corresponds to males (2) and the PCM endpoint (1). Curves are listed and plotted in the usual matrix order of R.</p>
+<p>A third example using the MGUS data treats it as a multi-state model and it shown in the upper right of <a href="#fig-mfig2">Figure&nbsp;2</a>. In this version a subject can have multiple transitions and thus multiple rows in the data set. In this case it is necessary to identify which data rows go with which subject via the <code>id</code> argument of <code>survfit</code>; valid estimates of the curves and their standard errors both depend on this. Our model looks like the illness-death model of <a href="#fig-mfig1">Figure&nbsp;1</a> but with “PCM” as the upper state and no arrow for a return from that state to health. The necessary data set will have two rows for any subject who has further follow-up after a PCM and a single row for all others. The data set is created below using the <code>tmerge</code> function, which is discussed in detail in another vignette.</p>
+<p>We need to decide what to do with the 9 subjects who have PCM and death declared at the same month. (Some of these were cancer cases discovered at autopsy.) They slipped through without comment in the earlier competing risks analysis; only when setting up this second data set did we notice the ties. Looking back at the code, the prior example counted these subjects as a progression. In retrospect this is a defensible choice: even though undetected before death, the disease must have been present for some amount of time previous and so progression did occur first. For the multi-state model we need to be explicit in how this is coded since a sojourn time of 0 within a state is not allowed. Below we push the progression time back by .1 month when there is a tie, but that amount is entirely arbitrary. Since there are 3 possible transitions we will call the data set <code>data3</code>.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>ptemp <span class="ot">&lt;-</span> <span class="fu">with</span>(mgus2, <span class="fu">ifelse</span>(ptime <span class="sc">==</span> futime <span class="sc">&amp;</span> pstat <span class="sc">==</span> <span class="dv">1</span>, ptime <span class="sc">-</span> .<span class="dv">1</span>, ptime))</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>data3 <span class="ot">&lt;-</span> <span class="fu">tmerge</span>(mgus2, mgus2,</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">id =</span> id, <span class="at">death =</span> <span class="fu">event</span>(futime, death),</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">pcm =</span> <span class="fu">event</span>(ptemp, pstat)</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>data3 <span class="ot">&lt;-</span> <span class="fu">tmerge</span>(data3, data3, id, <span class="at">enum =</span> <span class="fu">cumtdc</span>(tstart))</span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a><span class="fu">with</span>(data3, <span class="fu">table</span>(death, pcm))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>     pcm
+death   0   1
+    0 421 115
+    1 963   0</code></pre>
+</div>
+</div>
+<p>The table above shows that there are no observations in <code>data3</code> that have both a PCM and death, i.e., the ties have been resolved. The last <code>tmerge</code> line above creates a variable <code>enum</code> which simply counts rows for each person, which is often useful.</p>
+<div class="cell" data-fig="true">
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>temp <span class="ot">&lt;-</span> <span class="fu">with</span>(data3, <span class="fu">ifelse</span>(death <span class="sc">==</span> <span class="dv">1</span>, <span class="dv">2</span>, pcm))</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>data3<span class="sc">$</span>event <span class="ot">&lt;-</span> <span class="fu">factor</span>(temp, <span class="dv">0</span><span class="sc">:</span><span class="dv">2</span>, <span class="at">labels =</span> <span class="fu">c</span>(<span class="st">"censor"</span>, <span class="st">"pcm"</span>, <span class="st">"death"</span>))</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>mfit3 <span class="ot">&lt;-</span> <span class="fu">survfit</span>(<span class="fu">Surv</span>(tstart, tstop, event) <span class="sc">~</span> sex, <span class="at">data =</span> data3, <span class="at">id =</span> id)</span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(mfit3, <span class="at">rmean =</span> <span class="dv">240</span>, <span class="at">digits =</span> <span class="dv">2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Call: survfit(formula = Surv(tstart, tstop, event) ~ sex, data = data3, 
+    id = id)
+
+               n nevent rmean*
+sex=F, (s0)  690      0  118.2
+sex=M, (s0)  809      0  104.1
+sex=F, pcm   690     59    3.2
+sex=M, pcm   809     56    2.7
+sex=F, death 690    423  118.6
+sex=M, death 809    540  133.2
+   *restricted mean time in state (max time = 240 )</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>mfit3<span class="sc">$</span>transitions</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>       to
+from    pcm death (censored)
+  (s0)  115   860        409
+  pcm     0   103         12
+  death   0     0          0</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(mfit3[, <span class="st">"pcm"</span>],</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">mark.time =</span> <span class="cn">FALSE</span>, <span class="at">col =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>, <span class="at">lty =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>, <span class="at">lwd =</span> <span class="dv">2</span>,</span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">xscale =</span> <span class="dv">12</span>,</span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">xlab =</span> <span class="st">"Years post MGUS diagnosis"</span>, <span class="at">ylab =</span> <span class="st">"Fraction in the PCM state"</span></span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a><span class="fu">legend</span>(<span class="dv">40</span>, .<span class="dv">4</span>, <span class="fu">c</span>(<span class="st">"female"</span>, <span class="st">"male"</span>), <span class="at">lty =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>, <span class="at">col =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>, <span class="at">lwd =</span> <span class="dv">2</span>, <span class="at">bty =</span> <span class="st">"n"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="compete_files/figure-html/mgus4g-1.png" class="img-fluid" style="width:100.0%"></p>
+</div>
+</div>
+<p>This plot is quite different in that it shows the fraction of subjects <em>currently</em> in the PCM state. Looking at our multi-state diagram this is the fraction of subjects in the upper right PCM box. The curve goes up whenever someone enters the box (progression) and down when they leave (death). Myeloma survival was quite short during the era of this study — most subjects died within 1 year of PCM — and the proportion currently in the PCM state rarely rises above 2 percent.</p>
+<p>The result of <code>print(mfit3)</code> reveals, as expected, less time spent in the PCM state. In the prior <code>mfit2</code> model, subjects who enter that state remain there for the duration; in this one they quickly pass through. It is worthwhile to check the <code>transitions</code> table in the output, simply as a data check, since an error in creating the input data can lead to surprising counts and an even more surprising curve. In this case it shows subjects going from the entry state to PCM and death along with transitions from PCM to death. This is as expected.</p>
+<p>We have often found the three curve display shown below useful in the case of a transient state. It combines the results from competing risk model used above along with a second fit that treats death after PCM as a separate state from death before progression, the <em>multi-state 2</em> model of <a href="#fig-mfig2">Figure&nbsp;2</a>. In this plot the fraction of subjects currently in the PCM state is shown by the distance between the two curves. Only males are shown in the plot to minimize overlap.</p>
+<div class="cell" data-fig="true">
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Death after PCM will correspond to data rows with</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a><span class="co">#  enum = 2 and event = death</span></span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>d2 <span class="ot">&lt;-</span> <span class="fu">with</span>(data3, <span class="fu">ifelse</span>(enum <span class="sc">==</span> <span class="dv">2</span> <span class="sc">&amp;</span> event <span class="sc">==</span> <span class="st">"death"</span>, <span class="dv">4</span>, <span class="fu">as.numeric</span>(event)))</span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>e2 <span class="ot">&lt;-</span> <span class="fu">factor</span>(d2, <span class="at">labels =</span> <span class="fu">c</span>(</span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a>  <span class="st">"censor"</span>, <span class="st">"pcm"</span>, <span class="st">"death w/o pcm"</span>,</span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a>  <span class="st">"death after pcm"</span></span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a>))</span>
+<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a>mfit4 <span class="ot">&lt;-</span> <span class="fu">survfit</span>(<span class="fu">Surv</span>(tstart, tstop, e2) <span class="sc">~</span> sex, <span class="at">data =</span> data3, <span class="at">id =</span> id)</span>
+<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(mfit2[<span class="dv">2</span>, ],</span>
+<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">lty =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>),</span>
+<span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">xscale =</span> <span class="dv">12</span>, <span class="at">mark.time =</span> <span class="cn">FALSE</span>, <span class="at">lwd =</span> <span class="dv">2</span>,</span>
+<span id="cb22-12"><a href="#cb22-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">xlab =</span> <span class="st">"Years post diagnosis"</span>, <span class="at">ylab =</span> <span class="st">"Probability in State"</span></span>
+<span id="cb22-13"><a href="#cb22-13" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb22-14"><a href="#cb22-14" aria-hidden="true" tabindex="-1"></a><span class="fu">lines</span>(mfit4[<span class="dv">2</span>, <span class="dv">4</span>],</span>
+<span id="cb22-15"><a href="#cb22-15" aria-hidden="true" tabindex="-1"></a>  <span class="at">mark.time =</span> <span class="cn">FALSE</span>, <span class="at">col =</span> <span class="dv">2</span>, <span class="at">lty =</span> <span class="dv">1</span>, <span class="at">lwd =</span> <span class="dv">2</span>,</span>
+<span id="cb22-16"><a href="#cb22-16" aria-hidden="true" tabindex="-1"></a>  <span class="at">conf.int =</span> <span class="cn">FALSE</span></span>
+<span id="cb22-17"><a href="#cb22-17" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb22-18"><a href="#cb22-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-19"><a href="#cb22-19" aria-hidden="true" tabindex="-1"></a><span class="fu">legend</span>(<span class="dv">200</span>, .<span class="dv">5</span>, <span class="fu">c</span>(</span>
+<span id="cb22-20"><a href="#cb22-20" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Death w/o PCM"</span>, <span class="st">"ever PCM"</span>,</span>
+<span id="cb22-21"><a href="#cb22-21" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Death after PCM"</span></span>
+<span id="cb22-22"><a href="#cb22-22" aria-hidden="true" tabindex="-1"></a>),</span>
+<span id="cb22-23"><a href="#cb22-23" aria-hidden="true" tabindex="-1"></a><span class="at">col =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">2</span>), <span class="at">lty =</span> <span class="fu">c</span>(<span class="dv">2</span>, <span class="dv">1</span>, <span class="dv">1</span>),</span>
+<span id="cb22-24"><a href="#cb22-24" aria-hidden="true" tabindex="-1"></a><span class="at">lwd =</span> <span class="dv">2</span>, <span class="at">bty =</span> <span class="st">"n"</span>, <span class="at">cex =</span> .<span class="dv">82</span></span>
+<span id="cb22-25"><a href="#cb22-25" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="compete_files/figure-html/mgus5-1.png" class="img-fluid" style="width:100.0%"></p>
+</div>
+</div>
+</section>
+<section id="further-notes" class="level3">
+<h3 class="anchored" data-anchor-id="further-notes">Further notes</h3>
+<p>The Aalen-Johansen method used by <code>survfit</code> does not account for interval censoring, also known as panel data, where a subject’s current state is recorded at some fixed time such as a medical center visit but the actual times of transitions are unknown. Such data requires further assumptions about the transition process in order to model the outcomes and has a more complex likelihood. The <code>msm</code> package, for instance, deals with data of this type. If subjects reliably come in at regular intervals then the difference between the two results can be small, e.g., the <code>msm</code> routine estimates time until progression <em>occurred</em> whereas <code>survfit</code> estimates time until progression was <em>observed</em>.</p>
+<ul>
+<li><p>When using multi-state data to create Aalen-Johansen estimates, individuals are not allowed to have gaps in the middle of their time line. An example of this would be a data set with (0, 30, pcm] and (50,70, death] as the two observations for a subject where the time from 30-70 is not accounted for.</p></li>
+<li><p>Subjects must stay in the same group over their entire observation time, i.e., variables on the right hand side of the equation cannot be time-dependent.</p></li>
+<li><p>A transition to the same state is allowed, e.g., observations of (0,50, 1], (50, 75, 3], (75, 89, 4], (89, 93, 4] and (93, 100, 4] for a subject who goes from entry to state 1, then to state 3, and finally to state 4. However, a warning message is issued for the data set in this case, since stuttering may instead be the result of a coding mistake. The same result is obtained if the last three observations were collapsed to a single row of (75, 100, 4].</p></li>
+</ul>
+</section>
+</section>
+<section id="rate-models" class="level2">
+<h2 class="anchored" data-anchor-id="rate-models">Rate models</h2>
+<p>For simple two-state survival, the Cox model leads to three relationships</p>
+<p><span id="eq-hazard"><span class="math display">\[\lambda(t)  = \lambda_0(t) e^{X\beta} \tag{4}\]</span></span> <span id="eq-cumhaz"><span class="math display">\[\Lambda(t)  = \Lambda_0(t) e^{X\beta} \tag{5}\]</span></span> <span id="eq-surv"><span class="math display">\[S(t)        = \exp(-\Lambda(t)) \tag{6}\]</span></span></p>
+<p>where <span class="math inline">\(\lambda\)</span>, <span class="math inline">\(\Lambda\)</span> and <span class="math inline">\(S\)</span> are the hazard, cumulative hazard and survival functions, respectively. There is a single linear predictor which governs both the rate <span class="math inline">\(\lambda\)</span> (the arrow in <a href="#fig-mfig1">Figure&nbsp;1</a>) and probability of residing in the left hand box of the figure. For multi-state models this simplicity no longer holds; proportional hazards does not lead to proportional <span class="math inline">\(p(t)\)</span> curves. There is a fundamental dichotomy in the analysis namely that</p>
+<ul>
+<li>hazards can be computed one at a time,</li>
+<li>probability in state must be done for all states at once.</li>
+</ul>
+<p>The analysis of multi-state data has four key steps. In order of importance:</p>
+<ol type="1">
+<li><p>Draw a box and arrow figure describing the model.</p></li>
+<li><p>Think through the rates (arrows).</p>
+<ol type="a">
+<li>Which covariates should be attached to each rate? Sometimes a covariate is important for one transition, but not for another.</li>
+<li>For which transitions should one or more of the covariates be constrained to have the same coefficient? Sometimes there will be a biologic rationale for this. For other studies an equivalence is forced simply because we have too many unknowns and cannot accommodate them all. (This is the same reason that models often contain very few interaction terms).</li>
+<li>Which, if any, of the transitions should share the same baseline hazard? Most of the time the baseline rates are all assumed to be different.</li>
+<li>Should there be random effects, and if so what is an appropriate correlation structure? Do some pairs of transitions have a shared effect, some pairs separate effects and others no random effect? Mixed effects Cox models tend to need larger sample size — does the data set have enough events?</li>
+</ol></li>
+<li><p>Build an appropriate data set.</p></li>
+<li><p>Fit the data. Examine multiple summaries of the model fit, including the predicted occupancy curves.</p></li>
+</ol>
+<p>Step 1 is key to the entire endeavor. We saw in <a href="#fig-mfig2">Figure&nbsp;2</a> and the examples above that multiple views of a multi-state process can be useful, and this will hold for modeling as well. Step 3 will often be the one that demands the most attention to detail.</p>
+<section id="mgus-example" class="level3">
+<h3 class="anchored" data-anchor-id="mgus-example">MGUS example</h3>
+<p>Start with the simplest model for the MGUS data:</p>
+<p>a competing risks model (upper left diagram of <a href="#fig-mfig2">Figure&nbsp;2</a>), distinct baseline hazards for the two rates, no shared coefficients, and three covariates.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="fu">options</span>(<span class="at">show.signif.stars =</span> <span class="cn">FALSE</span>) <span class="co"># display intelligence</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>cfit1 <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="fu">Surv</span>(etime, event) <span class="sc">~</span> age <span class="sc">+</span> sex <span class="sc">+</span> mspike, mgus2, <span class="at">id =</span> id)</span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>cfit1<span class="sc">$</span>cmap</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>       1:2 1:3
+age      1   4
+sexM     2   5
+mspike   3   6</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(cfit1, <span class="at">digits =</span> <span class="dv">2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Call:
+coxph(formula = Surv(etime, event) ~ age + sex + mspike, data = mgus2, 
+    id = id)
+
+        
+1:2         coef exp(coef) se(coef) robust se   z     p
+  age     0.0164    1.0165   0.0084    0.0069 2.4  0.02
+  sexM   -0.0050    0.9950   0.1884    0.1880 0.0  0.98
+  mspike  0.8841    2.4208   0.1652    0.1683 5.3 2e-07
+
+        
+1:3         coef exp(coef) se(coef) robust se    z      p
+  age     0.0652    1.0674   0.0036    0.0037 17.4 &lt;2e-16
+  sexM    0.3889    1.4754   0.0699    0.0666  5.8  5e-09
+  mspike -0.0593    0.9425   0.0639    0.0620 -1.0    0.3
+
+ States:  1= (s0), 2= pcm, 3= death 
+
+Likelihood ratio test=419  on 6 df, p=&lt;2e-16
+n= 1373, number of events= 969 
+   (11 observations deleted due to missingness)</code></pre>
+</div>
+</div>
+<p>This above call fits both endpoints at once. The resulting R object contains a single vector of coefficients, the <code>cmap</code> component documents which goes with which endpoint and is used by the print routine to organize the printout. We see that the effect of age and sex on non-PCM mortality is profound, which is not a surprise given the median starting age of 72. Risk rises 1.9 fold per decade of age and the death rate for males is 1.5 times as great as that for females. The size of the serum monoclonal spike has almost no impact on non-PCM mortality. A 1 unit increase changes mortality by only 6%.</p>
+<p>The mspike size has a major impact on progression, however; each 1 gram change increases risk by 2.4 fold. The interquartile range of <code>mspike</code> is 0.9 gram so this risk increase is clinically important. The effect of age on the progression rate is much less pronounced, with a coefficient only 1/4 that for mortality, while the effect of sex on progression is completely negligible.</p>
+<p>The effect of sex on the <em>lifetime</em> probability of PCM is not zero, however. Because females live longer, a female with MGUS will on average spend more total years at risk for PCM than the average male, and so has a larger lifetime risk of PCM. The average rate of progression is about 1% per year, as shown below, while the mean post diagnosis lifetime is 19 months longer for females. The overall effect is a 1.6% increase in lifetime risk.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>pfit1 <span class="ot">&lt;-</span> <span class="fu">pyears</span>(<span class="fu">Surv</span>(ptime, pstat) <span class="sc">~</span> sex, mgus2, <span class="at">scale =</span> <span class="dv">12</span>)</span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a><span class="fu">round</span>(<span class="dv">100</span> <span class="sc">*</span> pfit1<span class="sc">$</span>event <span class="sc">/</span> pfit1<span class="sc">$</span>pyears, <span class="dv">1</span>) <span class="co"># PCM rate per year</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>sex
+  F   M 
+1.1 1.0 </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>temp <span class="ot">&lt;-</span> <span class="fu">summary</span>(mfit1, <span class="at">rmean =</span> <span class="st">"common"</span>) <span class="co"># print the mean survival time</span></span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a><span class="fu">round</span>(temp<span class="sc">$</span>table[, <span class="dv">1</span><span class="sc">:</span><span class="dv">6</span>], <span class="dv">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>      records n.max n.start events rmean se(rmean)
+sex=F     631   631     631    423 143.5       6.4
+sex=M     753   753     753    540 125.0       5.7</code></pre>
+</div>
+</div>
+<p>The same Cox model coefficients can also be obtained by fitting separate models for the PCM and death endpoint, censoring cases that fail due to the other cause. Hazards can be computed one at a time. When computing <span class="math inline">\(p(t)\)</span>, on the other hand, all the rates must be considered at once, it is necessary to use the joint fit <code>cfit1</code> above. We create predicted curves for four hypothetical subjects below.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>dummy <span class="ot">&lt;-</span> <span class="fu">expand.grid</span>(<span class="at">sex =</span> <span class="fu">c</span>(<span class="st">"F"</span>, <span class="st">"M"</span>), <span class="at">age =</span> <span class="fu">c</span>(<span class="dv">60</span>, <span class="dv">80</span>), <span class="at">mspike =</span> <span class="fl">1.2</span>)</span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>dummy</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  sex age mspike
+1   F  60    1.2
+2   M  60    1.2
+3   F  80    1.2
+4   M  80    1.2</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>csurv <span class="ot">&lt;-</span> <span class="fu">survfit</span>(cfit1, <span class="at">newdata =</span> dummy)</span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a><span class="fu">dim</span>(csurv)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  data states 
+     4      3 </code></pre>
+</div>
+</div>
+<p>The resulting set of Aalen-Johansen estimates can be indexed as though it were an array. There is only one stratum (the Cox model did not have strata), four hypothetical subjects, and 3 states. (When there is only a single stratum, as here, the subscript method allows that index to be omitted, for backwards compatability).</p>
+<div class="cell" data-fig="true">
+<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(csurv[, <span class="st">"pcm"</span>],</span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">xmax =</span> <span class="dv">25</span> <span class="sc">*</span> <span class="dv">12</span>, <span class="at">xscale =</span> <span class="dv">12</span>,</span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">xlab =</span> <span class="st">"Years after MGUS diagnosis"</span>, <span class="at">ylab =</span> <span class="st">"PCM"</span>,</span>
+<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">col =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>, <span class="at">lty =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">2</span>), <span class="at">lwd =</span> <span class="dv">2</span></span>
+<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb35-6"><a href="#cb35-6" aria-hidden="true" tabindex="-1"></a><span class="fu">legend</span>(<span class="dv">10</span>, .<span class="dv">14</span>, <span class="fu">outer</span>(<span class="fu">c</span>(<span class="st">"female"</span>, <span class="st">"male   "</span>),</span>
+<span id="cb35-7"><a href="#cb35-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">c</span>(<span class="st">"diagnosis at age 60"</span>, <span class="st">"diagnosis at age 80"</span>),</span>
+<span id="cb35-8"><a href="#cb35-8" aria-hidden="true" tabindex="-1"></a>  paste,</span>
+<span id="cb35-9"><a href="#cb35-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">sep =</span> <span class="st">", "</span></span>
+<span id="cb35-10"><a href="#cb35-10" aria-hidden="true" tabindex="-1"></a>),</span>
+<span id="cb35-11"><a href="#cb35-11" aria-hidden="true" tabindex="-1"></a><span class="at">col =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>, <span class="at">lty =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">2</span>), <span class="at">bty =</span> <span class="st">"n"</span>, <span class="at">lwd =</span> <span class="dv">2</span></span>
+<span id="cb35-12"><a href="#cb35-12" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="compete_files/figure-html/PCMcurve2-1.png" class="img-fluid" style="width:100.0%"></p>
+</div>
+</div>
+<p>The individual survival curves that would result from fitting each endpoint separately are not actually of interest, since each will be a Cox model analog of the pcmbad curve we criticized earlier.</p>
+<p>The coxph fits showed that sex has nearly no effect on the hazard of PCM, i.e., on any given day the risk of conversion for a male is essentially the same as for a female of the same age. Yet we see above that the fitted Cox models predict a higher lifetime risk for females; this is due to a longer lifespan. The age effect on lifetime risk that is far from proportional: the 80 year curves flatten out while predictions for the younger subjects do not. Very few subjects acquire PCM more than 15 years after a MGUS diagnosis at age 80 for the obvious reason: very few of them will still be alive.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Print out a M/F results at 20 years</span></span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>temp <span class="ot">&lt;-</span> <span class="fu">summary</span>(csurv, <span class="at">time =</span> <span class="dv">20</span> <span class="sc">*</span> <span class="dv">12</span>)<span class="sc">$</span>pstate</span>
+<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a><span class="fu">cbind</span>(dummy, <span class="at">PCM =</span> <span class="fu">round</span>(<span class="dv">100</span> <span class="sc">*</span> temp[, , <span class="dv">2</span>], <span class="dv">1</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  sex age mspike  PCM
+1   F  60    1.2 11.9
+2   M  60    1.2 10.5
+3   F  80    1.2  8.5
+4   M  80    1.2  6.1</code></pre>
+</div>
+</div>
+<p>The above table shows that females are predicted to have a higher risk of 20 year progression, even though their hazard at any given moment is nearly identical to males. The female/male difference at 20 years is on the order of our “back of the napkin” person-years estimate of 1% progression per year * 1.7 more years of life for the females, but the progression fraction varies substantially by group.</p>
+</section>
+</section>
+<section id="fine-gray-model" class="level2">
+<h2 class="anchored" data-anchor-id="fine-gray-model">Fine-Gray model</h2>
+<p>For the competing risk case the Fine-Gray model provides an alternate way of looking at the data. As we saw above, the impact of a particular covariate on the final values <span class="math inline">\(P\)</span> can be complex, even if the models for the hazards are relatively simple.</p>
+<p>The primary idea of the Fine-Gray approach is to turn the multi-state problem into a collection of two-state ones. In the upper right diagram of <a href="#fig-mfig2">Figure&nbsp;2</a>, draw a circle around all of the states except the chosen endpoint and collapse them into a single meta-state. For the MGUS data these are</p>
+<ul>
+<li>Model 1
+<ul>
+<li>left box: All subjects in the entry or “death first” state</li>
+<li>right box: PCM</li>
+</ul></li>
+<li>Model 2
+<ul>
+<li>left box: All subjects in the entry or “PCM first” state</li>
+<li>right box: Death (without PCM)</li>
+</ul></li>
+</ul>
+<p>An interesting aspect of this is that the fit can be done as a two stage process: the first stage creates a special data set while the second fits a weighted <code>coxph</code> or <code>survfit</code> model to the data. The data set can be created using the <code>finegray</code> command.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="co"># (first three lines are identical to an earlier section)</span></span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>etime <span class="ot">&lt;-</span> <span class="fu">with</span>(mgus2, <span class="fu">ifelse</span>(pstat <span class="sc">==</span> <span class="dv">0</span>, futime, ptime))</span>
+<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a>event <span class="ot">&lt;-</span> <span class="fu">with</span>(mgus2, <span class="fu">ifelse</span>(pstat <span class="sc">==</span> <span class="dv">0</span>, <span class="dv">2</span> <span class="sc">*</span> death, <span class="dv">1</span>))</span>
+<span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a>event <span class="ot">&lt;-</span> <span class="fu">factor</span>(event, <span class="dv">0</span><span class="sc">:</span><span class="dv">2</span>, <span class="at">labels =</span> <span class="fu">c</span>(<span class="st">"censor"</span>, <span class="st">"pcm"</span>, <span class="st">"death"</span>))</span>
+<span id="cb38-5"><a href="#cb38-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-6"><a href="#cb38-6" aria-hidden="true" tabindex="-1"></a>pcmdat <span class="ot">&lt;-</span> <span class="fu">finegray</span>(<span class="fu">Surv</span>(etime, event) <span class="sc">~</span> .,</span>
+<span id="cb38-7"><a href="#cb38-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> mgus2,</span>
+<span id="cb38-8"><a href="#cb38-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">etype =</span> <span class="st">"pcm"</span></span>
+<span id="cb38-9"><a href="#cb38-9" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb38-10"><a href="#cb38-10" aria-hidden="true" tabindex="-1"></a>pcmdat[<span class="dv">1</span><span class="sc">:</span><span class="dv">4</span>, <span class="fu">c</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>, <span class="dv">11</span><span class="sc">:</span><span class="dv">14</span>)]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  id age sex death fgstart fgstop fgstatus
+1  1  88   F     1       0     35        0
+2  1  88   F     1      35     44        0
+3  1  88   F     1      44     47        0
+4  1  88   F     1      48     52        0</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb40"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a>deathdat <span class="ot">&lt;-</span> <span class="fu">finegray</span>(<span class="fu">Surv</span>(etime, event) <span class="sc">~</span> .,</span>
+<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> mgus2,</span>
+<span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">etype =</span> <span class="st">"death"</span></span>
+<span id="cb40-4"><a href="#cb40-4" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb40-5"><a href="#cb40-5" aria-hidden="true" tabindex="-1"></a><span class="fu">dim</span>(pcmdat)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 41775    15</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb42"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="fu">dim</span>(deathdat)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 12910    15</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb44"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a><span class="fu">dim</span>(mgus2)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 1384   13</code></pre>
+</div>
+</div>
+<p>The <code>finegray</code> command has been used to create two data sets: one for the PCM endpoint and one for the death endpoint. In each, four new variables have been added containing a survival time <code>(fgstart, fgstop, fgstatus)</code> with an ‘ordinary’ status of 0/1, along with a case weight and a large number of new rows. We can use this new data set as yet another way to compute multi-state survival curves, though there is no good reason to use this rather roundabout approach instead of the simpler <code>survfit(Surv(etime, event) \textasciitilde sex)</code>.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb46"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a><span class="co"># The PCM curves of the multi-state model</span></span>
+<span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a>pfit2 <span class="ot">&lt;-</span> <span class="fu">survfit</span>(<span class="fu">Surv</span>(fgstart, fgstop, fgstatus) <span class="sc">~</span> sex,</span>
+<span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> pcmdat, <span class="at">weight =</span> fgwt</span>
+<span id="cb46-4"><a href="#cb46-4" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb46-5"><a href="#cb46-5" aria-hidden="true" tabindex="-1"></a><span class="co"># The death curves of the multi-state model</span></span>
+<span id="cb46-6"><a href="#cb46-6" aria-hidden="true" tabindex="-1"></a>dfit2 <span class="ot">&lt;-</span> <span class="fu">survfit</span>(<span class="fu">Surv</span>(fgstart, fgstop, fgstatus) <span class="sc">~</span> sex,</span>
+<span id="cb46-7"><a href="#cb46-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> deathdat, <span class="at">weight =</span> fgwt</span>
+<span id="cb46-8"><a href="#cb46-8" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Inspection shows that the two new curves are almost identical to the prior estimates based on the Aalen-Johansen estimate (<code>mfit2</code>), and in fact would be identical if we had accounted for the slightly different censoring patterns in males and females (by adding <code>strata(sex)</code> to the right hand side of the <code>finegray</code> formulas).</p>
+<p>A Cox model fit to the constructed data set yields the Fine-Gray models for PCM and for death.</p>
+<div class="cell" data-fig="true">
+<div class="sourceCode cell-code" id="cb47"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a>fgfit1 <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="fu">Surv</span>(fgstart, fgstop, fgstatus) <span class="sc">~</span> sex,</span>
+<span id="cb47-2"><a href="#cb47-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> pcmdat,</span>
+<span id="cb47-3"><a href="#cb47-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">weight =</span> fgwt</span>
+<span id="cb47-4"><a href="#cb47-4" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb47-5"><a href="#cb47-5" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(fgfit1)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Call:
+coxph(formula = Surv(fgstart, fgstop, fgstatus) ~ sex, data = pcmdat, 
+    weights = fgwt)
+
+  n= 41775, number of events= 115 
+
+        coef exp(coef) se(coef) robust se      z Pr(&gt;|z|)
+sexM -0.2290    0.7953   0.1866    0.1813 -1.263    0.207
+
+     exp(coef) exp(-coef) lower .95 upper .95
+sexM    0.7953      1.257    0.5574     1.135
+
+Concordance= 0.528  (se = 0.024 )
+Likelihood ratio test= 1.51  on 1 df,   p=0.2
+Wald test            = 1.6  on 1 df,   p=0.2
+Score (logrank) test = 1.51  on 1 df,   p=0.2,   Robust = 1.57  p=0.2
+
+  (Note: the likelihood ratio and score tests assume independence of
+     observations within a cluster, the Wald and robust score tests do not).</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb49"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a>fgfit2 <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="fu">Surv</span>(fgstart, fgstop, fgstatus) <span class="sc">~</span> sex,</span>
+<span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> deathdat,</span>
+<span id="cb49-3"><a href="#cb49-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">weight =</span> fgwt</span>
+<span id="cb49-4"><a href="#cb49-4" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb49-5"><a href="#cb49-5" aria-hidden="true" tabindex="-1"></a>fgfit2</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Call:
+coxph(formula = Surv(fgstart, fgstop, fgstatus) ~ sex, data = deathdat, 
+    weights = fgwt)
+
+        coef exp(coef) se(coef) robust se     z       p
+sexM 0.23349   1.26299  0.06894   0.06427 3.633 0.00028
+
+Likelihood ratio test=11.57  on 1 df, p=0.0006703
+n= 12910, number of events= 860 </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb51"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a>mfit2 <span class="ot">&lt;-</span> <span class="fu">survfit</span>(<span class="fu">Surv</span>(etime, event) <span class="sc">~</span> sex, <span class="at">data =</span> mgus2) <span class="co"># reprise the AJ</span></span>
+<span id="cb51-2"><a href="#cb51-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(mfit2[, <span class="st">"pcm"</span>],</span>
+<span id="cb51-3"><a href="#cb51-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">col =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>,</span>
+<span id="cb51-4"><a href="#cb51-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">lwd =</span> <span class="dv">2</span>, <span class="at">xscale =</span> <span class="dv">12</span>,</span>
+<span id="cb51-5"><a href="#cb51-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">conf.times =</span> <span class="fu">c</span>(<span class="dv">5</span>, <span class="dv">15</span>, <span class="dv">25</span>) <span class="sc">*</span> <span class="dv">12</span>,</span>
+<span id="cb51-6"><a href="#cb51-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">xlab =</span> <span class="st">"Years post diagnosis"</span>, <span class="at">ylab =</span> <span class="st">"Fraction with PCM"</span></span>
+<span id="cb51-7"><a href="#cb51-7" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb51-8"><a href="#cb51-8" aria-hidden="true" tabindex="-1"></a>ndata <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">sex =</span> <span class="fu">c</span>(<span class="st">"F"</span>, <span class="st">"M"</span>))</span>
+<span id="cb51-9"><a href="#cb51-9" aria-hidden="true" tabindex="-1"></a>fgsurv1 <span class="ot">&lt;-</span> <span class="fu">survfit</span>(fgfit1, ndata)</span>
+<span id="cb51-10"><a href="#cb51-10" aria-hidden="true" tabindex="-1"></a><span class="fu">lines</span>(fgsurv1, <span class="at">fun =</span> <span class="st">"event"</span>, <span class="at">lty =</span> <span class="dv">2</span>, <span class="at">lwd =</span> <span class="dv">2</span>, <span class="at">col =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>)</span>
+<span id="cb51-11"><a href="#cb51-11" aria-hidden="true" tabindex="-1"></a><span class="fu">legend</span>(<span class="st">"topleft"</span>, <span class="fu">c</span>(</span>
+<span id="cb51-12"><a href="#cb51-12" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Female, Aalen-Johansen"</span>, <span class="st">"Male, Aalen-Johansen"</span>,</span>
+<span id="cb51-13"><a href="#cb51-13" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Female, Fine-Gray"</span>, <span class="st">"Male, Fine-Gray"</span></span>
+<span id="cb51-14"><a href="#cb51-14" aria-hidden="true" tabindex="-1"></a>),</span>
+<span id="cb51-15"><a href="#cb51-15" aria-hidden="true" tabindex="-1"></a><span class="at">col =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>, <span class="at">lty =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">2</span>), <span class="at">bty =</span> <span class="st">"n"</span></span>
+<span id="cb51-16"><a href="#cb51-16" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="compete_files/figure-html/fg2-1.png" class="img-fluid" style="width:100.0%"></p>
+</div>
+<div class="sourceCode cell-code" id="cb52"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a><span class="co"># rate models with only sex</span></span>
+<span id="cb52-2"><a href="#cb52-2" aria-hidden="true" tabindex="-1"></a>cfitr <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="fu">Surv</span>(etime, event) <span class="sc">~</span> sex, mgus2, <span class="at">id =</span> id)</span>
+<span id="cb52-3"><a href="#cb52-3" aria-hidden="true" tabindex="-1"></a>rcurve <span class="ot">&lt;-</span> <span class="fu">survfit</span>(cfitr, <span class="at">newdata =</span> ndata)</span>
+<span id="cb52-4"><a href="#cb52-4" aria-hidden="true" tabindex="-1"></a><span class="co"># lines(rcurve[, 'pcm'], col=6:7)   # makes the plot too crowsded</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>The FG model states that males have a less <em>observed</em> PCM, by a factor of 0.8, and that this hazard ratio is constant over time. An overlaid plot of the non-parametric Aalen-Johansen estimates for the PCM state (from <code>survfit</code>) along with predicted curves from the Fine-Gray model show that proportional hazards is not unreasonable for this particular fit. The predicted values from the rate model, computed just above but not plotted on the curve, also fit well with the data.</p>
+<p>When there is only a single categorical 0/1 covariate the Fine-Gray model reduces to Gray’s test of the subdistribution function, in the same way that a <code>coxph</code> fit with a single categorical predictor is equivalent to the log-rank test.</p>
+<p>The mathematics behind the Fine-Gray estimate starts with the functions <span class="math inline">\(F_k(t) = p_k(t)\)</span>, where <span class="math inline">\(p\)</span> is the probability in state function estimated by the AJ estimate. This can be thought of as the distribution function for the improper random variable <span class="math inline">\(T^*= I(\mbox{event type}=k)T + I(\mbox{event type}\ne k)\infty\)</span>. Fine and Gray refer to <span class="math inline">\(F_k\)</span> as a subdistribution function. In analogy to the survival probability in the two state model define</p>
+<p><span id="eq-FG"><span class="math display">\[
+\gamma_k(t) = - d \log[1-F_k(t)]/dt
+\tag{7}\]</span></span></p>
+<p>and assume that <span class="math inline">\(\gamma_k(t;x) = \gamma_{k0}(t) \exp(X\beta)\)</span>. In a 2 state alive <span class="math inline">\(\longrightarrow\)</span> death model, <span class="math inline">\(\gamma\)</span> becomes the usual hazard function <span class="math inline">\(\lambda\)</span>.</p>
+<p>In the same way that our multivariate Cox model <code>cfit1</code> made the simplifying assumption that the impact of male sex is to increase the hazard for death by a factor of ’r round(exp(coef(cfit1)[5]), 2)`, independent of the subject’s age or serum mspike value, the Fine-Gray model assumes that each covariate’s effect on <span class="math inline">\(\log(1-F)\)</span> is a constant, independent of other variables. Both model’s assumptions are wonderfully simplifying with respect to understanding a covariate, since we can think about each covariate separately from all the others. This is, of course, under the assumption that the model is correct: that additivity across covariates, linearity, and proportional hazards all hold.</p>
+<p>In a multi-state model, however, these assumptions cannot hold for both the per-transition and Fine-Gray models formulations at the same time; if true for one, they will not be true for the other.</p>
+<p>Now consider a multivariate fit on age, sex, and serum m-spike.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb53"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a>fgfit2a <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="fu">Surv</span>(fgstart, fgstop, fgstatus) <span class="sc">~</span> age <span class="sc">+</span> sex <span class="sc">+</span> mspike,</span>
+<span id="cb53-2"><a href="#cb53-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> pcmdat, <span class="at">weight =</span> fgwt</span>
+<span id="cb53-3"><a href="#cb53-3" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb53-4"><a href="#cb53-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb53-5"><a href="#cb53-5" aria-hidden="true" tabindex="-1"></a>fgfit2b <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="fu">Surv</span>(fgstart, fgstop, fgstatus) <span class="sc">~</span> age <span class="sc">+</span> sex <span class="sc">+</span> mspike,</span>
+<span id="cb53-6"><a href="#cb53-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> deathdat, <span class="at">weight =</span> fgwt</span>
+<span id="cb53-7"><a href="#cb53-7" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb53-8"><a href="#cb53-8" aria-hidden="true" tabindex="-1"></a><span class="fu">round</span>(<span class="fu">rbind</span>(<span class="at">PCM =</span> <span class="fu">coef</span>(fgfit2a), <span class="at">death =</span> <span class="fu">coef</span>(fgfit2b)), <span class="dv">3</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>         age   sexM mspike
+PCM   -0.017 -0.213  0.888
+death  0.059  0.369 -0.154</code></pre>
+</div>
+</div>
+<p>The Fine-Gray fits show an effect of all three variables on the subdistribution rates. Males have a lower lifetime risk of PCM before death and a higher risk of death before PCM, while a high serum m-spike works in the opposite direction. The Cox models showed no effect of sex on the instantaneous hazard of PCM and none for serum m-spike on the death rate. However, as shown in the last section, the Cox models do predict a greater lifetime risk for females. We had also seen that older subjects are less likely to experience PCM due to the competing risk of death; this is reflected in the FG model as a negative coefficient for age.</p>
+<p>Now compute predicted survival curves for the model, and show them alongside the predictions from the multi-state Cox model.</p>
+<div class="cell" data-fig="true">
+<div class="sourceCode cell-code" id="cb55"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb55-1"><a href="#cb55-1" aria-hidden="true" tabindex="-1"></a>oldpar <span class="ot">&lt;-</span> <span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>))</span>
+<span id="cb55-2"><a href="#cb55-2" aria-hidden="true" tabindex="-1"></a>dummy <span class="ot">&lt;-</span> <span class="fu">expand.grid</span>(<span class="at">sex =</span> <span class="fu">c</span>(<span class="st">"F"</span>, <span class="st">"M"</span>), <span class="at">age =</span> <span class="fu">c</span>(<span class="dv">60</span>, <span class="dv">80</span>), <span class="at">mspike =</span> <span class="fl">1.2</span>)</span>
+<span id="cb55-3"><a href="#cb55-3" aria-hidden="true" tabindex="-1"></a>fsurv1 <span class="ot">&lt;-</span> <span class="fu">survfit</span>(fgfit2a, dummy) <span class="co"># time to progression curves</span></span>
+<span id="cb55-4"><a href="#cb55-4" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(fsurv1,</span>
+<span id="cb55-5"><a href="#cb55-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">xscale =</span> <span class="dv">12</span>, <span class="at">col =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>, <span class="at">lty =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">2</span>), <span class="at">lwd =</span> <span class="dv">2</span>, <span class="at">fun =</span> <span class="st">"event"</span>,</span>
+<span id="cb55-6"><a href="#cb55-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">xlab =</span> <span class="st">"Years"</span>, <span class="at">ylab =</span> <span class="st">"Fine-Gray predicted"</span>,</span>
+<span id="cb55-7"><a href="#cb55-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">xmax =</span> <span class="dv">12</span> <span class="sc">*</span> <span class="dv">25</span>, <span class="at">ylim =</span> <span class="fu">c</span>(<span class="dv">0</span>, .<span class="dv">15</span>)</span>
+<span id="cb55-8"><a href="#cb55-8" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb55-9"><a href="#cb55-9" aria-hidden="true" tabindex="-1"></a><span class="fu">legend</span>(<span class="dv">1</span>, .<span class="dv">15</span>, <span class="fu">c</span>(<span class="st">"Female, 60"</span>, <span class="st">"Male, 60"</span>, <span class="st">"Female: 80"</span>, <span class="st">"Male, 80"</span>),</span>
+<span id="cb55-10"><a href="#cb55-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">col =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">1</span>, <span class="dv">2</span>), <span class="at">lty =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">2</span>), <span class="at">lwd =</span> <span class="dv">2</span>, <span class="at">bty =</span> <span class="st">"n"</span></span>
+<span id="cb55-11"><a href="#cb55-11" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb55-12"><a href="#cb55-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb55-13"><a href="#cb55-13" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(csurv[, <span class="dv">2</span>],</span>
+<span id="cb55-14"><a href="#cb55-14" aria-hidden="true" tabindex="-1"></a>  <span class="at">xscale =</span> <span class="dv">12</span>, <span class="at">col =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>, <span class="at">lty =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">2</span>), <span class="at">lwd =</span> <span class="dv">2</span>,</span>
+<span id="cb55-15"><a href="#cb55-15" aria-hidden="true" tabindex="-1"></a>  <span class="at">xlab =</span> <span class="st">"Years"</span>, <span class="at">ylab =</span> <span class="st">"Multi-state predicted"</span>,</span>
+<span id="cb55-16"><a href="#cb55-16" aria-hidden="true" tabindex="-1"></a>  <span class="at">xmax =</span> <span class="dv">12</span> <span class="sc">*</span> <span class="dv">25</span>, <span class="at">ylim =</span> <span class="fu">c</span>(<span class="dv">0</span>, .<span class="dv">15</span>)</span>
+<span id="cb55-17"><a href="#cb55-17" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb55-18"><a href="#cb55-18" aria-hidden="true" tabindex="-1"></a><span class="fu">legend</span>(<span class="dv">1</span>, .<span class="dv">15</span>, <span class="fu">c</span>(<span class="st">"Female, 60"</span>, <span class="st">"Male, 60"</span>, <span class="st">"Female: 80"</span>, <span class="st">"Male, 80"</span>),</span>
+<span id="cb55-19"><a href="#cb55-19" aria-hidden="true" tabindex="-1"></a>  <span class="at">col =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">1</span>, <span class="dv">2</span>), <span class="at">lty =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">2</span>), <span class="at">lwd =</span> <span class="dv">2</span>, <span class="at">bty =</span> <span class="st">"n"</span></span>
+<span id="cb55-20"><a href="#cb55-20" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="compete_files/figure-html/finegray2-1.png" class="img-fluid" style="width:100.0%"></p>
+</div>
+<div class="sourceCode cell-code" id="cb56"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(oldpar)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>The predictions as a function of age group are quite different for the Fine-Gray model: new PCM cases are predicted 20+ years after diagnosis in both the old and young age groups, while they are predicted to cease in the multi-state fit. The average of all four curves is nearly the same at each age, but the global proportional hazards assumption of the FG model forces the curves to remain parallel.</p>
+<p>We can check the proportional hazards assumption of the models using the <code>cox.zph</code> function, linearity of the continuous variables age and mspike by using non-linear terms such as <code>pspline</code> or <code>ns</code>, and additivity by exploring interactions. All are obvious and important next steps. For instance, the proportional hazards assumption for age shows clear violations.</p>
+<div class="cell" data-fig="true">
+<div class="sourceCode cell-code" id="cb57"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb57-1"><a href="#cb57-1" aria-hidden="true" tabindex="-1"></a>zph.fgfit2a <span class="ot">&lt;-</span> <span class="fu">cox.zph</span>(fgfit2a)</span>
+<span id="cb57-2"><a href="#cb57-2" aria-hidden="true" tabindex="-1"></a>zph.fgfit2a</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>         chisq df       p
+age    20.7744  1 5.2e-06
+sex     0.2456  1 0.62016
+mspike  0.0857  1 0.76966
+GLOBAL 20.9965  3 0.00011</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb59"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb59-1"><a href="#cb59-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(zph.fgfit2a[<span class="dv">1</span>])</span>
+<span id="cb59-2"><a href="#cb59-2" aria-hidden="true" tabindex="-1"></a><span class="fu">abline</span>(<span class="at">h =</span> <span class="fu">coef</span>(fgfit2a)[<span class="dv">1</span>], <span class="at">lty =</span> <span class="dv">2</span>, <span class="at">col =</span> <span class="dv">2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="compete_files/figure-html/finegray-check-1.png" class="img-fluid" style="width:100.0%"></p>
+</div>
+</div>
+<p>A further weakness of the Fine-Gray approach is that since the two endpoints are modeled separately, the results do not have to be consistent. Below is a graph of the predicted fraction who have experienced neither endpoint. For subjects diagnosed at age 80 the Fine-Gray models predict that more than 100% will either progress or die by 30 years. Predictions based on the Aalen-Johansen approach do not have this issue.</p>
+<div class="cell" data-fig="true">
+<div class="sourceCode cell-code" id="cb60"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb60-1"><a href="#cb60-1" aria-hidden="true" tabindex="-1"></a>fsurv2 <span class="ot">&lt;-</span> <span class="fu">survfit</span>(fgfit2b, dummy) <span class="co"># time to progression curves</span></span>
+<span id="cb60-2"><a href="#cb60-2" aria-hidden="true" tabindex="-1"></a>xtime <span class="ot">&lt;-</span> <span class="dv">0</span><span class="sc">:</span>(<span class="dv">30</span> <span class="sc">*</span> <span class="dv">12</span>) <span class="co"># 30 years</span></span>
+<span id="cb60-3"><a href="#cb60-3" aria-hidden="true" tabindex="-1"></a>y1a <span class="ot">&lt;-</span> <span class="dv">1</span> <span class="sc">-</span> <span class="fu">summary</span>(fsurv1, <span class="at">times =</span> xtime)<span class="sc">$</span>surv <span class="co"># predicted pcm</span></span>
+<span id="cb60-4"><a href="#cb60-4" aria-hidden="true" tabindex="-1"></a>y1b <span class="ot">&lt;-</span> <span class="dv">1</span> <span class="sc">-</span> <span class="fu">summary</span>(fsurv2, <span class="at">times =</span> xtime)<span class="sc">$</span>surv <span class="co"># predicted deaths before pcm</span></span>
+<span id="cb60-5"><a href="#cb60-5" aria-hidden="true" tabindex="-1"></a>y1 <span class="ot">&lt;-</span> (y1a <span class="sc">+</span> y1b) <span class="co"># either</span></span>
+<span id="cb60-6"><a href="#cb60-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb60-7"><a href="#cb60-7" aria-hidden="true" tabindex="-1"></a><span class="fu">matplot</span>(xtime <span class="sc">/</span> <span class="dv">12</span>, y1,</span>
+<span id="cb60-8"><a href="#cb60-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">col =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>, <span class="at">lty =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">2</span>), <span class="at">type =</span> <span class="st">"l"</span>,</span>
+<span id="cb60-9"><a href="#cb60-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">xlab =</span> <span class="st">"Years post diagnosis"</span>, <span class="at">ylab =</span> <span class="st">"FG: either endpoint"</span></span>
+<span id="cb60-10"><a href="#cb60-10" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb60-11"><a href="#cb60-11" aria-hidden="true" tabindex="-1"></a><span class="fu">abline</span>(<span class="at">h =</span> <span class="dv">1</span>, <span class="at">col =</span> <span class="dv">3</span>)</span>
+<span id="cb60-12"><a href="#cb60-12" aria-hidden="true" tabindex="-1"></a><span class="fu">legend</span>(<span class="st">"bottomright"</span>, <span class="fu">c</span>(<span class="st">"Female, 60"</span>, <span class="st">"Male, 60"</span>, <span class="st">"Female: 80"</span>, <span class="st">"Male, 80"</span>),</span>
+<span id="cb60-13"><a href="#cb60-13" aria-hidden="true" tabindex="-1"></a>  <span class="at">col =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">1</span>, <span class="dv">2</span>), <span class="at">lty =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">2</span>), <span class="at">lwd =</span> <span class="dv">2</span>, <span class="at">bty =</span> <span class="st">"n"</span></span>
+<span id="cb60-14"><a href="#cb60-14" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="compete_files/figure-html/finegray3-1.png" class="img-fluid" style="width:100.0%"></p>
+</div>
+</div>
+<p>The primary strength of the Fine-Gray model with respect to the Cox model approach is that if lifetime risk is a primary question, then the model has given us a simple and digestible answer to that question: “females have a 1.2 fold higher lifetime risk of PCM, after adjustment for age and serum m-spike”. This simplicity is not without a price, however, and these authors are not proponents of the approach. There are five issues.</p>
+<ul>
+<li><p>The attempt to capture a complex process as a single value is grasping for a simplicity that does not exist for many (perhaps most) data sets.</p>
+<p>The necessary assumptions in a multivariate Cox model of proportional hazards, linearity of continuous variables, and no interactions are strong ones. For the FG model these need to hold for a combined process — the mixture of transition rates to each endpoint — which turns out to be a more difficult barrier.</p></li>
+<li><p>The sum of predictions need not be consistent.</p></li>
+<li><p>From the per-transition Cox model one can work forward and compute <span class="math inline">\(p(t)\)</span>, the occupancy probabilities for each state over time; both the hazard ratios and <span class="math inline">\(p\)</span> are useful summaries of the data. We don’t have tools to work backwards from a Fine-Gray fit to the per transition hazards.</p></li>
+<li><p>The approach is viable only for competing risks and not for other multi-state models.</p></li>
+<li><p>The risk sets are odd.</p></li>
+</ul>
+<p>The last of these is perhaps the most frequently listed issue with the Fine-Gray model, but it is actually a minor complaint. The state probabilities <span class="math inline">\(p(t)\)</span> in a multi-state model are implicitly fractions of the total population we started with: someone who dies in month 1 is still a part of the denominator for the fraction of subjects with PCM at 20 years. In the Fine-Gray formulas this subject explicitly appears in risk set denominators at a later time, which looks odd but is more of an artifact.</p>
+<p>The first issue is substantial, however, and checking the model assumptions of a Fine-Gray fit is mandatory. The second point is alarming, but it normally does not have a practical impact unless there is long follow-up.</p>
+</section>
+<section id="shared-coefficients" class="level2">
+<h2 class="anchored" data-anchor-id="shared-coefficients">Shared coefficients</h2>
+<p>To fit risk models that have shared coefficients or baseline hazards we use an extended formula notation for the <code>coxph</code> function. For the simple competing risks MGUS fit above, assume that we wanted to add hemoglobin to the fit, with a common coefficient for both the PCM and death endpoint. (Anemia is a feature of both PCM and old age.)</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb61"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb61-1"><a href="#cb61-1" aria-hidden="true" tabindex="-1"></a>hgfit <span class="ot">&lt;-</span> <span class="fu">coxph</span>(</span>
+<span id="cb61-2"><a href="#cb61-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(</span>
+<span id="cb61-3"><a href="#cb61-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">Surv</span>(etime, event) <span class="sc">~</span> age <span class="sc">+</span> sex <span class="sc">+</span> mspike,</span>
+<span id="cb61-4"><a href="#cb61-4" aria-hidden="true" tabindex="-1"></a>    <span class="dv">1</span><span class="sc">:</span><span class="dv">2</span> <span class="sc">+</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">3</span> <span class="sc">~</span> hgb <span class="sc">/</span> common</span>
+<span id="cb61-5"><a href="#cb61-5" aria-hidden="true" tabindex="-1"></a>  ),</span>
+<span id="cb61-6"><a href="#cb61-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> mgus2, <span class="at">id =</span> id</span>
+<span id="cb61-7"><a href="#cb61-7" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb61-8"><a href="#cb61-8" aria-hidden="true" tabindex="-1"></a>hgfit</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Call:
+coxph(formula = list(Surv(etime, event) ~ age + sex + mspike, 
+    1:2 + 1:3 ~ hgb/common), data = mgus2, id = id)
+
+        
+1:2           coef exp(coef)  se(coef) robust se      z
+  age     0.011060  1.011121  0.008260  0.006628  1.669
+  sexM    0.147761  1.159235  0.190008  0.189061  0.782
+  mspike  0.906741  2.476238  0.164981  0.166127  5.458
+  hgb    -0.143520  0.866303  0.017401  0.018365 -7.815
+        
+1:2             p
+  age      0.0952
+  sexM     0.4345
+  mspike 4.81e-08
+  hgb    5.50e-15
+
+        
+1:3           coef exp(coef)  se(coef) robust se      z
+  age     0.058360  1.060097  0.003643  0.003864 15.104
+  sexM    0.510426  1.666000  0.071518  0.069098  7.387
+  mspike -0.081829  0.921430  0.063280  0.062474 -1.310
+  hgb    -0.143520  0.866303  0.017401  0.018365 -7.815
+        
+1:3            p
+  age    &lt; 2e-16
+  sexM   1.5e-13
+  mspike    0.19
+  hgb    5.5e-15
+
+ States:  1= (s0), 2= pcm, 3= death 
+
+Likelihood ratio test=478.3  on 7 df, p=&lt; 2.2e-16
+n= 1384, number of events= 963 
+   (24 observations deleted due to missingness)</code></pre>
+</div>
+</div>
+<p>Notice that the hemoglobin coefficient is identical for the PCM and death models. A closer look at the result shows that the coefficient vector is of length 7 and not 8, orchestrated by the <code>cmap</code> component. The variance matrix likewise is 7 by 7.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb63"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb63-1"><a href="#cb63-1" aria-hidden="true" tabindex="-1"></a>hgfit<span class="sc">$</span>coef</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>    age_1:2    sexM_1:2  mspike_1:2         hgb     age_1:3 
+ 0.01105974  0.14776052  0.90674053 -0.14352039  0.05836029 
+   sexM_1:3  mspike_1:3 
+ 0.51042581 -0.08182865 </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb65"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb65-1"><a href="#cb65-1" aria-hidden="true" tabindex="-1"></a>hgfit<span class="sc">$</span>cmap</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>       1:2 1:3
+age      1   5
+sexM     2   6
+mspike   3   7
+hgb      4   4</code></pre>
+</div>
+</div>
+<p>In a <code>coxph</code> formula list, the first element is the default formula which will be applied to all the transitions. The second, third, etc. elements are pseudo-formulas that have a set of transitions as the “response”, and usual covariate formulas on the right. For instance, if we wanted creatinine to be a covariate for only the transition to PCM a third line of <code>1:2 \textasciitilde creat</code> could be added.</p>
+<p>There is flexibility in how the left hand side is written. The following are all valid forms for the second line of our formula.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb67"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb67-1"><a href="#cb67-1" aria-hidden="true" tabindex="-1"></a><span class="fu">list</span>(</span>
+<span id="cb67-2"><a href="#cb67-2" aria-hidden="true" tabindex="-1"></a>  <span class="dv">1</span><span class="sc">:</span><span class="fu">c</span>(<span class="st">"pcm"</span>, <span class="st">"death"</span>) <span class="sc">~</span> hgb <span class="sc">/</span> common,</span>
+<span id="cb67-3"><a href="#cb67-3" aria-hidden="true" tabindex="-1"></a>  <span class="dv">1</span><span class="sc">:</span><span class="dv">0</span> <span class="sc">~</span> hgb <span class="sc">/</span> common,</span>
+<span id="cb67-4"><a href="#cb67-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">state</span>(<span class="st">"(s0)"</span>)<span class="sc">:</span>(<span class="dv">2</span><span class="sc">:</span><span class="dv">3</span>) <span class="sc">~</span> hgb <span class="sc">/</span> common</span>
+<span id="cb67-5"><a href="#cb67-5" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>A ‘0’ is shorthand for “any state”. Transitions in the formula that do not occur in the data are silently ignored, e.g., the implicit 1:1 transition of our second line above.</p>
+<p>For the three transition model based on data3, the following fits first a model with 3 baseline hazards and 6 coefficients. The second fit assumes a common baseline hazard for the two transitions to death.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb68"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb68-1"><a href="#cb68-1" aria-hidden="true" tabindex="-1"></a>cox3a <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="fu">Surv</span>(tstart, tstop, event) <span class="sc">~</span> age <span class="sc">+</span> sex, data3, <span class="at">id =</span> id)</span>
+<span id="cb68-2"><a href="#cb68-2" aria-hidden="true" tabindex="-1"></a>cox3b <span class="ot">&lt;-</span> <span class="fu">coxph</span>(</span>
+<span id="cb68-3"><a href="#cb68-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(</span>
+<span id="cb68-4"><a href="#cb68-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">Surv</span>(tstart, tstop, event) <span class="sc">~</span> age <span class="sc">+</span> sex,</span>
+<span id="cb68-5"><a href="#cb68-5" aria-hidden="true" tabindex="-1"></a>    <span class="dv">1</span><span class="sc">:</span><span class="dv">3</span> <span class="sc">+</span> <span class="dv">2</span><span class="sc">:</span><span class="dv">3</span> <span class="sc">~</span> <span class="dv">1</span> <span class="sc">/</span> common</span>
+<span id="cb68-6"><a href="#cb68-6" aria-hidden="true" tabindex="-1"></a>  ),</span>
+<span id="cb68-7"><a href="#cb68-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> data3, <span class="at">id =</span> id</span>
+<span id="cb68-8"><a href="#cb68-8" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb68-9"><a href="#cb68-9" aria-hidden="true" tabindex="-1"></a>cox3b<span class="sc">$</span>cmap</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>     1:2 1:3 2:3
+age    1   3   5
+sexM   2   4   6</code></pre>
+</div>
+</div>
+<p>For this data set model <code>cox3b</code> makes very little medical sense, since death rates after PCM do not even remotely resemble those for patients without a plasma cell malignancy. (The fact that the package allows something does not make it a good idea.) In other data sets a shared baseline for all the transitions to death can be an effective model. Be aware that though shared baselines for two transitions that end in the same state is acceptable, a shared hazard for two transitions that originate in the same state is not compatable with the partial likelihood formulation of a Cox model, and will lead to surprising results (often a large number of NA coefficients).</p>
+<p>An alternative approach to the above is to fit the joint model using a special data set. To reproduce the <code>hgfit</code> model above, create a stacked data set with <span class="math inline">\(2n\)</span> observations. The first <span class="math inline">\(n\)</span> rows are the data set we would use for a time to PCM analysis, with a simple 0/1 status variable encoding the PCM outcome. The second <span class="math inline">\(n\)</span> rows are the data set we would have used for the ‘death before PCM’ fits, with status encoding the death-before-PCM endpoint. A last variable, <code>group</code>, is ‘pcm’ for the first <span class="math inline">\(n\)</span> observations and ‘death’ for the remainder. Then fit a model</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb70"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb70-1"><a href="#cb70-1" aria-hidden="true" tabindex="-1"></a>temp1 <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(mgus2, <span class="at">time =</span> etime, <span class="at">status =</span> (event <span class="sc">==</span> <span class="st">"pcm"</span>), <span class="at">group =</span> <span class="st">"pcm"</span>)</span>
+<span id="cb70-2"><a href="#cb70-2" aria-hidden="true" tabindex="-1"></a>temp2 <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(mgus2, <span class="at">time =</span> etime, <span class="at">status =</span> (event <span class="sc">==</span> <span class="st">"death"</span>), <span class="at">group =</span> <span class="st">"death"</span>)</span>
+<span id="cb70-3"><a href="#cb70-3" aria-hidden="true" tabindex="-1"></a>stacked <span class="ot">&lt;-</span> <span class="fu">rbind</span>(temp1, temp2)</span>
+<span id="cb70-4"><a href="#cb70-4" aria-hidden="true" tabindex="-1"></a>allfit <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="fu">Surv</span>(time, status) <span class="sc">~</span> hgb <span class="sc">+</span> (age <span class="sc">+</span> sex <span class="sc">+</span> mspike) <span class="sc">*</span> <span class="fu">strata</span>(group),</span>
+<span id="cb70-5"><a href="#cb70-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> stacked</span>
+<span id="cb70-6"><a href="#cb70-6" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb70-7"><a href="#cb70-7" aria-hidden="true" tabindex="-1"></a><span class="fu">all.equal</span>(allfit<span class="sc">$</span>loglik, hgfit<span class="sc">$</span>loglik)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] TRUE</code></pre>
+</div>
+</div>
+<p>This fits a common effect for hemoglobin (hgb) but separate age and sex effects for the two endpoints, along with separate baseline hazards.</p>
+</section>
+<section id="other-software" class="level2">
+<h2 class="anchored" data-anchor-id="other-software">Other software</h2>
+<section id="the-mstate-package" class="level3">
+<h3 class="anchored" data-anchor-id="the-mstate-package">The mstate package</h3>
+<p>As the number of states + transitions (arrows + boxes) gets larger then the ‘by hand’ approach used above for creating a stacked data set becomes a challenge. (It is still fairly easy to do, just not as easy to ensure it has been done <em>correctly</em>.)</p>
+<p>The <code>mstate</code> package starts with a definition of the matrix of possible transitions and uses that to drive tools that build and analyze a stacked data set in a more automated fashion. We find it a little more difficult to use than a <code>coxph</code> model with a multistate status variable. (The fact that we like our own child best should be no surprise, however). One current disadvantage of the survival package is that the Aalen-Johansen curves from a multi-state coxph model currently do not include a variance estimate, whereas those from mstate do have a variance.</p>
+<p>A current restriction in R is that packages on the <em>recommended</em> list (of which survival is one) should not depend on any packages outside that list. This precludes adding an mstate example to this vignette, even though it is a natural fit.</p>
+</section>
+</section>
+<section id="the-msm-package" class="level2">
+<h2 class="anchored" data-anchor-id="the-msm-package">The <code>msm</code> package</h2>
+<p>There are two broad classes of multi-state data:</p>
+<ul>
+<li><p>Panel data arises when subjects have regular visits, with the current state assessed at each visit. We don’t know when the transitions between states occur, or if other states may have been visited in the interim — only the subject’s state at specific times. This is also known as interval censored data.</p></li>
+<li><p>Survival data arises when we observe the transition times; death, for example.</p></li>
+</ul>
+<p>The overall model (boxes and arrows), the quantities of interest (transition rates and <span class="math inline">\(p(t)\)</span>), and the desired printout and graphs are identical for the two cases. Much of the work in creating a data set is also nearly the same. The underlying likelihood equations and resulting analytical methods for solving the problem are, however, completely different. The <code>msm</code> package addresses panel data, while <code>survival</code>, <code>mstate</code>, and many others are devoted to survival data.</p>
+</section>
+<section id="conclusions" class="level2">
+<h2 class="anchored" data-anchor-id="conclusions">Conclusions</h2>
+<p>When working with acute diseases, such as advanced cancer or end-stage liver disease, there is often a single dominating endpoint. Ordinary single event Kaplan-Meier curves and Cox models are then efficient and sufficient tools for much of the analysis. Such data was the primary use case for survival analysis earlier in the authors’ careers.</p>
+<p>Data with multiple important endpoints is now common, and multi-state methods are an important addition to the statistical toolbox. As shown above, they are now readily available and easy to use.</p>
+<p>It is sometimes assumed that the presence of competing risks <em>requires</em> the use of a Fine-Gray model (we have seen it in referee reports), but this is not correct. The model may often be useful, but is one available option among many. Grasping the big picture for a multi-state data set is always a challenge and we should make use of as many tools as possible. It is not always easy to jump between observed deaths, hazard rates, and lifetime risk. We are often reminded of the story of the gentleman on his 100th birthday who proclaimed that he was looking forward to many more years ahead because “I read the obituaries every day, and you almost never see someone over 100 listed there”.</p>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    target: function(trigger) {
+      return trigger.previousElementSibling;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+</body></html>
